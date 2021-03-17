@@ -10,12 +10,12 @@
 
 + [Add M5Stack to Arduino IDE](#ESP32)
 + [Libraries for Arduino IDE](#libraries)
-+ [information](#info)
++ [How to use](#info)
 
 * * *
 
 <br>
-<a name="ESP32"></a><h2>Add ESP32 in Arduino IDE</h2>
+<a name="ESP32"></a><h2>Add M5Stack in Arduino IDE</h2>
 
 Before we can start compiling, the Arduino IDE must have the M5Stack Core2 board, based on an ESP32 in the board selection available.
 The instruction on https://docs.m5stack.com/#/en/arduino/arduino_core2_development
@@ -39,6 +39,7 @@ The genaral instruction for the "M5Stack Core2" can be found here https://docs.m
 If you are have problem with the "wifi.h" delete the arduino/libraries/wiFi directory, you can use the esp32 WiFi.h
 <br>
 <br>
+<a name="info"></a><h2>How to use</h2>
 
 <p><img src="https://github.com/oxinon/IOTA-price-ticker-V3-M5Stack-Core2/blob/main/picture/Wen-settings.png" alt="Cover" width="600"></p>
 
