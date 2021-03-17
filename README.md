@@ -3,6 +3,9 @@
 <p><img src="https://github.com/oxinon/IOTA-price-ticker-V3-M5Stack-Core2/blob/main/picture/iota-price-ticker-m5stack.png" alt="Cover" width="600"></p>
 
 <br>
+
+
+<p><img src="https://github.com/oxinon/IOTA-price-ticker-V3-M5Stack-Core2/blob/main/picture/Wen-settings.png" alt="Cover" width="600"></p>
 * * *
 
 If you like my work, you can give me a tip for a beer :)<br><br>
