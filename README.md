@@ -1,6 +1,3 @@
-# IOTA-price-ticker-V3-M5Stack-Core2
-Simple IOTA price ticker by using M5Stack Core2 ESP32 and with CoinMarketcap API V2 for Arduino IDE
-
 <p><img src="https://github.com/oxinon/IOTA-price-ticker-V2-TTGO-T-Display/blob/master/picture/IOTA-Price-Ticker.png" alt="Cover" width="400"></p>
 
 <br>
