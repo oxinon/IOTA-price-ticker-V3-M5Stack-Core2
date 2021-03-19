@@ -41,6 +41,8 @@ If you are have problem with the "wifi.h" delete the arduino/libraries/wiFi dire
 <br>
 <a name="info"></a><h2>How to use</h2>
 
+first start shows no Wifi or CMC key in the display. The first start open a Wifi AP, connect to this Wifi and open a web browser enter the following IP address "192.168.4.1"
+
 <p><img src="https://github.com/oxinon/IOTA-price-ticker-V3-M5Stack-Core2/blob/main/picture/Wen-settings.png" alt="Cover" width="600"></p>
 
 * * *
