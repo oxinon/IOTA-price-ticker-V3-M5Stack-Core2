@@ -41,9 +41,16 @@ If you are have problem with the "wifi.h" delete the arduino/libraries/wiFi dire
 <br>
 <a name="info"></a><h2>How to use</h2>
 
-first start shows no Wifi or CMC key in the display. The first start open a Wifi AP, connect to this Wifi and open a web browser enter the following IP address "192.168.4.1"
+First start shows no Wifi or CMC key in the display. The first start open a Wifi AP, connect to this Wifi <b>Price-Ticker_SETUP</b> and open a web browser enter the following IP address "192.168.4.1". Please enter your data here, after submitting this data will be saved and it is not necessary to enter it again.
+<br>
+After the automatic restart, the price ticker connects to your wifi and shows your setting on the display, to check that everything is saved. If the price ticker is connected to the internet, it retrieves data from Coinmarketcap and shows it on the display, every 260sec. the data will be updated.
 
 <p><img src="https://github.com/oxinon/IOTA-price-ticker-V3-M5Stack-Core2/blob/main/picture/Wen-settings.png" alt="Cover" width="600"></p>
+<br>
+<b>Reset stored config</b>
+
+<p><img src="https://github.com/oxinon/IOTA-price-ticker-V3-M5Stack-Core2/blob/main/picture/reset-settings.png" alt="Cover" width="600"></p>
+
 
 * * *
 
