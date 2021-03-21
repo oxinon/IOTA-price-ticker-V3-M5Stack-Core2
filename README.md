@@ -54,6 +54,9 @@ second possibility, if the price ticker is connected to the wifi, the setting ca
 <br>
 
 <p><img src="https://github.com/oxinon/IOTA-price-ticker-V3-M5Stack-Core2/blob/main/picture/reset-settings.png" alt="Cover" width="600"></p>
+<br>
+<a name="lighting"></a><h2>Display lighting</h2>
+The lower 3 soft touch buttons set the brightness of the street in 3 steps. Button A = low, button B = middle, button C = high
 
 
 * * *
