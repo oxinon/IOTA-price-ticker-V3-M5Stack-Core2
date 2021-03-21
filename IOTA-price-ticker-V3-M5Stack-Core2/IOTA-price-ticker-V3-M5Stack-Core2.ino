@@ -1,4 +1,3 @@
-
 #include <M5Core2.h>
 #include <WiFi.h>
 #include <ESPmDNS.h>
@@ -12,7 +11,8 @@
 #include "alert.h"
 #include "iota.h"
 #include "iota2.h"
-
+#include "rocket.h"
+#include "moon.h"
 
 #define TFT_COLOR1    0x21CB  //green_blue
 #define GRAY    0x8410
@@ -167,13 +167,13 @@ boolean checkConnection() {
   M5.Lcd.setTextColor(RED);
   M5.Lcd.drawString("Timed out.", 0, 20, 2);
 
-  M5.Lcd.drawString("Reset config", 0, 30, 2);
+  M5.Lcd.drawString("Reset Wifi config", 0, 30, 2);
   M5.Lcd.setTextColor(GREEN);
   M5.Lcd.drawString("Starting AP Setup mode after restart", 0, 40, 2);
       // reset the wifi config
       preferences.remove("WIFI_SSID");
       preferences.remove("WIFI_PASSWD");
-      preferences.remove("CMC_API_KEY");
+     // preferences.remove("CMC_API_KEY");
       delay(1000);
       ESP.restart();
 
@@ -185,11 +185,11 @@ void startWebServer() {
     M5.Lcd.fillScreen(TFT_BLACK);
     M5.Lcd.setTextColor(WHITE);
     Serial.print("Starting Web Server at ");
-    M5.Lcd.print("Starting Web Server at ");
-    //M5.Lcd.drawString("Starting Web Server", 0, 0, 2);
+    //M5.Lcd.print("Starting Web Server at ");
+    M5.Lcd.drawString("Starting Web Server at 192.168.4.1", 0, 0, 2);
     Serial.println(WiFi.softAPIP());
     //M5.Lcd.drawString(WiFi.softAPIP(), 100, 0, 2);
-    M5.Lcd.print(WiFi.softAPIP());
+    //M5.Lcd.print(WiFi.softAPIP());
     webServer.on("/settings", []() {
       String s = "<h1>Wi-Fi and CMC API Settings</h1><p>Please enter your password by selecting the SSID<br> and your Coinmarketcap API Key.</p>";
       s += "<form method=\"get\" action=\"setap\"><label>SSID: </label><select name=\"ssid\">";
@@ -199,6 +199,7 @@ void startWebServer() {
       webServer.send(200, "text/html", makePage("Wi-Fi Settings", s));
     });
     webServer.on("/setap", []() {
+      M5.Lcd.fillScreen(TFT_BLACK);
       String ssid = urlDecode(webServer.arg("ssid"));
       Serial.print("SSID: ");
       M5.Lcd.print("SSID: ");
@@ -296,11 +297,12 @@ void setupMode() {
   // dnsServer.start(53, "*", apIP);
   startWebServer();
   Serial.print("Starting Access Point at \"");
-  M5.Lcd.print("Starting Access Point at \"");
+  //M5.Lcd.print("Starting Access Point at \"");
+   M5.Lcd.drawString("Starting Access Point at: Price-Ticker_SETUP", 0, 20, 2);
   Serial.print(apSSID);
-  M5.Lcd.print(apSSID);
+  //M5.Lcd.print(apSSID);
   Serial.println("\"");
-  M5.Lcd.println("\"");
+  //M5.Lcd.println("\"");
 }
 
 String makePage(String title, String contents) {
@@ -449,22 +451,32 @@ void printTickerDataIOTA(String ticker)
         M5.Lcd.setTextColor(WHITE);
         
         if (response.percent_change_1h < 0) {
-            M5.Lcd.setTextColor(RED);           
+            M5.Lcd.setTextColor(RED);          
         }
         
         if (response.percent_change_1h > 0) {
-            M5.Lcd.setTextColor(GREEN);            
+            M5.Lcd.setTextColor(GREEN);              
         }
         
 // Price
-        M5.Lcd.fillRect(115, 50, 205, 38, BLACK); 
+        M5.Lcd.fillRect(115, 38, 205, 50, BLACK); 
         M5.Lcd.drawString(String(response.price).c_str(), 115, 50, 6);
         M5.Lcd.setTextColor(CYAN);
+
+        if (response.price > 2) {
+           M5.Lcd.pushImage(265, 38, rocketWidth, rocketHeight, rocket);              
+        }
+
+        if (response.price > 5) {
+          M5.Lcd.pushImage(265, 38, moonWidth, moonHeight, moon);              
+        }
+
 
 // Rank
         M5.Lcd.drawString("Rank:", 115, 100, 4);
         M5.Lcd.fillRect(185, 100, 120, 20, BLACK); 
         M5.Lcd.drawString(String(response.cmc_rank).c_str(), 190, 100, 4);
+
 
 
 
