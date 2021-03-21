@@ -3,6 +3,9 @@
 <p><img src="https://github.com/oxinon/IOTA-price-ticker-V3-M5Stack-Core2/blob/main/picture/iota-price-ticker-m5stack.png" alt="Cover" width="600"></p>
 
 <br>
+IOTA ticker V3 on Youtube: https://www.youtube.com/watch?v=CBe5YHJxLos
+<br>
+<br>
 
 * * *
 
