@@ -16,6 +16,12 @@ IOTA ticker V3 on Youtube: https://www.youtube.com/watch?v=CBe5YHJxLos
 + [How to use](#info)
 
 * * *
+<br>
+<h2>Changelog</h2>
+23.06.2021
+- Add Baterry Indicator
+- Add USD/EUR select in Webconfig
+- Dark Theme
 
 <br>
 <a name="ESP32"></a><h2>Add M5Stack in Arduino IDE</h2>
