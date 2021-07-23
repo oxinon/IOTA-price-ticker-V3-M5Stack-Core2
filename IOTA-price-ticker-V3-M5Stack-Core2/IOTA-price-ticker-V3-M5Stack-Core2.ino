@@ -5,19 +5,40 @@
 #include "WebServer.h"
 #include <Preferences.h>
 #include "Wire.h"
-//#include "esp_adc_cal.h"
+#include "AXP192.h"
+
 
 #include "info.h"
 #include "alert.h"
 #include "iota.h"
+#include "iota1.h"
 #include "iota2.h"
+#include "iota3.h"
 #include "rocket.h"
 #include "moon.h"
 
-#define TFT_COLOR1    0x21CB  //green_blue
+#define TFT_COLOR1    0x0000  //green_blue
+#define TFT_COLOR2    0x0000  //green_blue
 #define GRAY    0x8410
+#define DGRAY   0x7BEF
+#define DGREEN  0x0606
+#define LGRAY   0xC618
+
+#define DBLUE   0x1414
+#define DRED    0xc0c0
+#define DYELLOW  0xe6e6
+
+
+#define TFT_BAR           0x21CB  //green_blue
+#define TFT_TEXTBAR       0x21CB  //green_blue
+#define TFT_LINE          0x21CB  //green_blue
+#define TFT_TEXTPRICE1    0x21CB  //green_blue#define TFT_COLOR1    0x21CB  //green_blue
+#define TFT_TEXTPRICE2    0x21CB 
+#define TFT_TEXTPRICE3    0x21CB 
+#define TFT_TEXTPRICE4    0x21CB 
 
 #include "CoinMarketCapApi.h"
+
 
 
 WiFiClientSecure client;
@@ -36,6 +57,7 @@ String ssidList;
 String wifi_ssid;
 String wifi_password;
 String cmc_api_key;
+String currency;
 
 float batVoltage = M5.Axp.GetBatVoltage();
 
@@ -43,11 +65,12 @@ int count = 0;
 
 int count2 = 0;
 
+String dollar = "\xA3";
 
 // DNSServer dnsServer;
 WebServer webServer(80);
 
-// wifi config store
+// wifi and config store
 Preferences preferences;
 
 
@@ -55,15 +78,17 @@ void setup() {
   m5.begin();
   Wire.begin();
   M5.Lcd.setSwapBytes(true);
+  M5.Axp.EnableCoulombcounter();
   preferences.begin("wifi-config");
 
     M5.Lcd.fillScreen(TFT_BLACK);
     M5.Lcd.setSwapBytes(true);
     M5.Lcd.pushImage(40, 50, iotaWidth, iotaHeight, iota);
-    delay(2000);
+    delay(4000);
     M5.Lcd.fillScreen(TFT_BLACK); 
 
    delay(10);
+
   if (restoreConfig()) {
     if (checkConnection()) {
       M5.Lcd.pushImage(280, 2, infoWidth, infoHeight, info);
@@ -80,6 +105,7 @@ void setup() {
 
 
 
+
 void loop() {
 
   M5.update();
@@ -87,8 +113,6 @@ void loop() {
   }
   webServer.handleClient();
   
-
-
   if(M5.BtnA.isPressed())  M5.Axp.SetLcdVoltage(2600);
   if(M5.BtnB.isPressed())  M5.Axp.SetLcdVoltage(2800);
   if(M5.BtnC.isPressed())  M5.Axp.SetLcdVoltage(3200);
@@ -97,9 +121,6 @@ void loop() {
     printTickerDataIOTA("MIOTA");
   }
   
-  Serial.print("Counter: ");
-  Serial.println(count2);
-
   count2++;
   
   delay(150);
@@ -111,6 +132,7 @@ boolean restoreConfig() {
   wifi_ssid = preferences.getString("WIFI_SSID");
   wifi_password = preferences.getString("WIFI_PASSWD");
   cmc_api_key = preferences.getString("CMC_API_KEY");
+  currency = preferences.getString("Currency");  
   M5.Lcd.pushImage(280, 2, infoWidth, infoHeight, info);
   Serial.print("WIFI-SSID: ");
   M5.Lcd.drawString("WIFI-SSID: ", 0, 0, 2);
@@ -124,6 +146,26 @@ boolean restoreConfig() {
   M5.Lcd.drawString("CMC_API_KEY: ", 0, 40, 2);
   Serial.println(cmc_api_key);
   M5.Lcd.drawString(cmc_api_key, 100, 40, 2);
+  Serial.print("Currency: ");
+  M5.Lcd.drawString("Currency: ", 0, 60, 2);
+  Serial.println(currency);
+  M5.Lcd.drawString(currency, 100, 60, 2);
+
+          
+  Serial.print("Bat Voltage: ");
+  Serial.println(M5.Axp.GetBatVoltage()); 
+  Serial.print("Bat Current: ");
+  Serial.println(M5.Axp.GetBatCurrent());
+  Serial.print("USB Voltage: ");
+  Serial.println(M5.Axp.GetVBusVoltage());
+  Serial.print("USB Current: ");
+  Serial.println(M5.Axp.GetVBusCurrent());
+  Serial.print("Vin Voltage: ");
+  Serial.println(M5.Axp.GetVinVoltage());
+  Serial.print("Vin Current: ");
+  Serial.println(M5.Axp.GetVinCurrent());
+  Serial.print("Bat Power: ");
+  Serial.println(M5.Axp.GetBatPower());  
 
   delay(2000);
   
@@ -131,7 +173,8 @@ boolean restoreConfig() {
 
   if(wifi_ssid.length() > 0) {
     return true;
-} else {
+  } 
+    else {
     return false;
   }
 }
@@ -146,6 +189,7 @@ boolean checkConnection() {
   M5.Lcd.println();
   M5.Lcd.println();
   M5.Lcd.println();
+  
 
 
   
@@ -156,6 +200,11 @@ boolean checkConnection() {
       Serial.println("Connected!");
       M5.Lcd.setTextColor(GREEN);
       M5.Lcd.drawString("Connected!", 0, 20, 2);
+    
+
+
+
+
       return (true);
     }
     delay(500);
@@ -191,11 +240,12 @@ void startWebServer() {
     //M5.Lcd.drawString(WiFi.softAPIP(), 100, 0, 2);
     //M5.Lcd.print(WiFi.softAPIP());
     webServer.on("/settings", []() {
-      String s = "<h1>Wi-Fi and CMC API Settings</h1><p>Please enter your password by selecting the SSID<br> and your Coinmarketcap API Key.</p>";
+      String s = "<h1>Wi-Fi CMC-API and Currency Settings</h1><p>Please enter your password by selecting the SSID<br> and your Coinmarketcap API Key.<br>Currency USD or EUR</p>";
       s += "<form method=\"get\" action=\"setap\"><label>SSID: </label><select name=\"ssid\">";
       s += ssidList;
       s += "</select><br>Password: <input name=\"pass\" length=64 type=\"password\">";
-      s += "<br>CMC API Key: <input name=\"apikey\" length=64 type=\"text\"><input type=\"submit\"></form>";
+      s += "<br>CMC API Key: <input name=\"apikey\" length=64 type=\"text\"><input type=\">";
+      s += "<br>Currency: <input name=\"currency\" length=64 type=\"text\"><input type=\"submit\"></form>";      
       webServer.send(200, "text/html", makePage("Wi-Fi Settings", s));
     });
     webServer.on("/setap", []() {
@@ -215,8 +265,14 @@ void startWebServer() {
       M5.Lcd.print("CMC API KEY: ");
       Serial.println(apikey);
       M5.Lcd.println(apikey);
+      String currency = urlDecode(webServer.arg("currency"));
+      Serial.print("Currency: ");
+      M5.Lcd.print("Currency: ");
+      Serial.println(currency);
+      M5.Lcd.println(currency);
       Serial.println("Writing API to EEPROM...");
       M5.Lcd.println("Writing API to EEPROM...");
+
 
       // Store wifi config
       Serial.println("Writing Password to nvr...");
@@ -224,6 +280,7 @@ void startWebServer() {
       preferences.putString("WIFI_SSID", ssid);
       preferences.putString("WIFI_PASSWD", pass);
       preferences.putString("CMC_API_KEY", apikey);
+      preferences.putString("Currency", currency);      
 
       Serial.println("Write nvr done!");
       M5.Lcd.println("Write nvr done!");
@@ -240,7 +297,9 @@ void startWebServer() {
     });
   }
   else {
-    M5.Lcd.fillScreen(TFT_BLACK);
+    
+    
+    M5.Lcd.fillScreen(BLACK);
     Serial.print("Starting Web Server at ");
     //M5.Lcd.print("Starting Web Server at ");
     //M5.Lcd.drawString("Loading Ticker data...", 0, 0, 2);
@@ -260,6 +319,7 @@ void startWebServer() {
       preferences.remove("WIFI_SSID");
       preferences.remove("WIFI_PASSWD");
       preferences.remove("CMC_API_KEY");
+      preferences.remove("Currency");
       String s = "<h1>Wi-Fi settings was reset.</h1><p>Please reset device.</p>";
       webServer.send(200, "text/html", makePage("Reset Wi-Fi Settings", s));
       delay(3000);
@@ -268,6 +328,7 @@ void startWebServer() {
     
 // Header 
     M5.Lcd.fillRect(0, 0, 320, 27, TFT_COLOR1);
+    M5.Lcd.drawLine(0, 27, 320, 27, TFT_COLOR2);
     printTickerDataIOTA("MIOTA");
   }
   webServer.begin();
@@ -362,7 +423,7 @@ void printTickerDataIOTA(String ticker)
     //For the new API, you can use the currency ID or abbreviated name, such as
     //Bitcoin, you can view the letter after Circulating Supply at https://coinmarketcap.com/, it is BTC
     CoinMarketCapApi api(client, cmc_api_key);
-    CMCTickerResponse response = api.GetTickerInfo(ticker, "USD");
+    CMCTickerResponse response = api.GetTickerInfo(ticker, currency);
     
     if (response.error == "") {
         Serial.print("ID: ");
@@ -397,6 +458,24 @@ void printTickerDataIOTA(String ticker)
         Serial.print("Last Updated: ");
         Serial.println(response.last_updated);
 
+        Serial.print("Bat Voltage: ");
+        Serial.println(M5.Axp.GetBatVoltage()); 
+        Serial.print("Bat Current: ");
+        Serial.println(M5.Axp.GetBatCurrent());
+        Serial.print("USB Voltage: ");
+        Serial.println(M5.Axp.GetVBusVoltage());
+        Serial.print("USB Current: ");
+        Serial.println(M5.Axp.GetVBusCurrent());
+        Serial.print("Vin Voltage: ");
+        Serial.println(M5.Axp.GetVinVoltage());
+        Serial.print("Vin Current: ");
+        Serial.println(M5.Axp.GetVinCurrent());
+        Serial.print("Bat Power: ");
+        Serial.println(M5.Axp.GetBatPower()); 
+
+
+        
+
 
 // Wifi signal bars
         Serial.print("WiFi Signal strength: ");
@@ -429,26 +508,92 @@ void printTickerDataIOTA(String ticker)
 
 // print signal bars
         for (int b = 0; b <= bars; b++) {
-            M5.Lcd.fillRect(281 + (b * 6), 23 - (b * 4), 5, b * 4, GRAY);
+            M5.Lcd.fillRect(281 + (b * 6), 23 - (b * 4), 5, b * 4, LGRAY);
         }
         
-        M5.Lcd.pushImage(10, 30, iota2Width, iota2Height, iota2);
+        M5.Lcd.pushImage(10, 40, iota2Width, iota2Height, iota2);
 
 
 // Battery stat
+
+// reding battery voltage
+    //uint16_t v = analogRead(ADC_PIN);
+    float battery_voltage = M5.Axp.GetBatVoltage();
+    String voltage = String(battery_voltage);
+    //Serial.println(voltage);
+    //Serial.println("");
+
+// battery symbol
+    M5.Lcd.fillRect(4, 7, 28, 2, LGRAY);
+    M5.Lcd.fillRect(4, 19, 28, 2, LGRAY);
+    M5.Lcd.fillRect(4, 7, 2, 12, LGRAY);
+    M5.Lcd.fillRect(32, 7, 2, 14, LGRAY);
+    M5.Lcd.fillRect(34, 11, 3, 6, LGRAY);
+
+// battery level symbol
+   if(battery_voltage <= 2.99){
+      M5.Lcd.fillRect(4, 7, 28, 2, DRED);
+      M5.Lcd.fillRect(4, 19, 28, 2, DRED);
+      M5.Lcd.fillRect(4, 7, 2, 14, DRED);
+      M5.Lcd.fillRect(32, 7, 2, 14, DRED);
+      M5.Lcd.fillRect(34, 11, 3, 6, DRED);
+      //M5.Lcd.drawString(voltage, 45, 8, 1);
+    }
+       
+   if(battery_voltage >= 3.0){
+      M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+      M5.Lcd.fillRect(6, 9, 4, 10, DRED);
+      //M5.Lcd.drawString(voltage, 45, 8, 1);
+    }
+   if(battery_voltage >= 3.2){
+     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+      M5.Lcd.fillRect(6, 9, 6, 10, DRED);
+      //M5.Lcd.drawString(voltage, 45, 8, 1);
+    }
+   if(battery_voltage >= 3.4){
+     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+      M5.Lcd.fillRect(6, 9, 11, 10, DYELLOW);
+      //M5.Lcd.drawString(voltage, 45, 8, 1);
+    }
+   if(battery_voltage >= 3.6){
+     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+      M5.Lcd.fillRect(6, 9, 16, 10, DYELLOW);
+      //M5.Lcd.drawString(voltage, 45, 8, 1);
+    }
+   if(battery_voltage >= 3.8){
+     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+      M5.Lcd.fillRect(6, 9, 21, 10, DGREEN);
+      //M5.Lcd.drawString(voltage, 45, 8, 1);
+    }
+   if(battery_voltage >= 4.0){
+     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+      M5.Lcd.fillRect(6, 9, 26, 10, DGREEN);
+      //M5.Lcd.drawString(voltage, 45, 8, 1);
+    }
+   if(battery_voltage >= 4.60){
+     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+      M5.Lcd.fillRect(6, 9, 26, 10, DGREEN);
+      //M5.Lcd.drawString("CHG", 10, 7, 1);
+    }
+   if(battery_voltage >= 4.85){
+     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+      M5.Lcd.fillRect(6, 9, 26, 10, CYAN);
+      //M5.Lcd.drawString("USB", 10, 7, 1);
+    }
 
 
 
 
 
 // Line
-        M5.Lcd.drawLine(10, 133, 310, 133, GRAY);
+        M5.Lcd.drawLine(10, 133, 310, 133, DGRAY);
+        
 
+        M5.Lcd.setTextColor(LGRAY);
+        M5.Lcd.drawString("IOTA Price Ticker", 65, 4, 4);
+              
 
-        M5.Lcd.setTextColor(GRAY);
-        M5.Lcd.drawString("MIOTA USD Price", 60, 4, 4);
-
-        M5.Lcd.setTextColor(WHITE);
+        M5.Lcd.setTextColor(YELLOW);
         
         if (response.percent_change_1h < 0) {
             M5.Lcd.setTextColor(RED);          
@@ -461,8 +606,33 @@ void printTickerDataIOTA(String ticker)
 // Price
         M5.Lcd.fillRect(115, 38, 205, 50, BLACK); 
         M5.Lcd.drawString(String(response.price).c_str(), 115, 50, 6);
-        M5.Lcd.setTextColor(CYAN);
+        if(currency == "EUR"){
 
+         if (response.price < 10) {
+          M5.Lcd.drawString("EUR", 215, 68, 4);
+         }
+
+         if (response.price > 10) {
+          M5.Lcd.drawString("EUR", 235, 68, 4);
+         }
+        }
+
+
+        if(currency == "USD"){
+
+         if (response.price < 10) {
+          M5.Lcd.drawString("USD", 215, 68, 4);
+         }
+
+         if (response.price > 10) {
+          M5.Lcd.drawString("USD", 235, 68, 4);
+         }
+        }        
+
+        if (response.price > 6) {
+          M5.Lcd.pushImage(265, 38, schnitzelWidth, schnitzelHeight, schnitzel);              
+        }
+        
         if (response.price > 2) {
            M5.Lcd.pushImage(265, 38, rocketWidth, rocketHeight, rocket);              
         }
@@ -473,6 +643,8 @@ void printTickerDataIOTA(String ticker)
 
 
 // Rank
+
+        M5.Lcd.setTextColor(DBLUE);
         M5.Lcd.drawString("Rank:", 115, 100, 4);
         M5.Lcd.fillRect(185, 100, 120, 20, BLACK); 
         M5.Lcd.drawString(String(response.cmc_rank).c_str(), 190, 100, 4);
@@ -530,7 +702,8 @@ void printTickerDataIOTA(String ticker)
     else {
         Serial.print("Error getting data: ");
         Serial.println(response.error);
-        M5.Lcd.fillRect(115, 53, 205, 38, BLACK); //wifi RSSI and alert
+        //M5.Lcd.fillRect(115, 53, 205, 38, BLACK); //wifi RSSI and alert
+        M5.Lcd.fillRect(115, 38, 205, 50, BLACK);
         M5.Lcd.pushImage(283, 53, alertWidth, alertHeight, alert);
         delay(1000);
     }
