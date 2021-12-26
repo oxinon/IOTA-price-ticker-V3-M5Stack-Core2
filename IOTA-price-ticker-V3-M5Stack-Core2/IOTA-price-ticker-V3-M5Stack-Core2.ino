@@ -1,3 +1,6 @@
+// IOTA Price Ticker 3v2 for M5Core2 ESP32 based board
+// info on github: https://github.com/oxinon/IOTA-price-ticker-V3-M5Stack-Core2
+
 #include <M5Core2.h>
 #include <WiFi.h>
 #include <ESPmDNS.h>
@@ -16,9 +19,15 @@
 #include "iota3.h"
 #include "rocket.h"
 #include "moon.h"
+#include "schnitzel.h"
+#include "manheim.h"
+#include "munic.h"
+#include "tirol.h"
+#include "wifilogo.h"
+#include "wsetup.h"
 
-#define TFT_COLOR1    0x0000  //green_blue
-#define TFT_COLOR2    0x0000  //green_blue
+#define TFT_COLOR1    0x0000 
+#define TFT_COLOR2    0x0000  
 #define GRAY    0x8410
 #define DGRAY   0x7BEF
 #define DGREEN  0x0606
@@ -29,10 +38,10 @@
 #define DYELLOW  0xe6e6
 
 
-#define TFT_BAR           0x21CB  //green_blue
-#define TFT_TEXTBAR       0x21CB  //green_blue
-#define TFT_LINE          0x21CB  //green_blue
-#define TFT_TEXTPRICE1    0x21CB  //green_blue#define TFT_COLOR1    0x21CB  //green_blue
+#define TFT_BAR           0x21CB  
+#define TFT_TEXTBAR       0x21CB  
+#define TFT_LINE          0x21CB  
+#define TFT_TEXTPRICE1    0x21CB  
 #define TFT_TEXTPRICE2    0x21CB 
 #define TFT_TEXTPRICE3    0x21CB 
 #define TFT_TEXTPRICE4    0x21CB 
@@ -57,7 +66,7 @@ String ssidList;
 String wifi_ssid;
 String wifi_password;
 String cmc_api_key;
-String currency;
+String curren_cy;
 
 float batVoltage = M5.Axp.GetBatVoltage();
 
@@ -84,7 +93,10 @@ void setup() {
     M5.Lcd.fillScreen(TFT_BLACK);
     M5.Lcd.setSwapBytes(true);
     M5.Lcd.pushImage(40, 50, iotaWidth, iotaHeight, iota);
-    delay(4000);
+    //M5.Lcd.pushImage(0, 0, manheimWidth, manheimHeight, manheim);
+    //M5.Lcd.pushImage(0, 0, tirolWidth, tirolHeight, tirol);
+
+    delay(6000);
     M5.Lcd.fillScreen(TFT_BLACK); 
 
    delay(10);
@@ -113,12 +125,20 @@ void loop() {
   }
   webServer.handleClient();
   
-  if(M5.BtnA.isPressed())  M5.Axp.SetLcdVoltage(2600);
+  if(M5.BtnA.isPressed())  
+  M5.Axp.SetLcdVoltage(2600);
+  
+
+
+
   if(M5.BtnB.isPressed())  M5.Axp.SetLcdVoltage(2800);
   if(M5.BtnC.isPressed())  M5.Axp.SetLcdVoltage(3200);
 
   if (count2 >=2600) {
     printTickerDataIOTA("MIOTA");
+
+    //For the new API, you can use the currency ID or abbreviated name, such as
+    //Bitcoin, you can view the letter after Circulating Supply at https://coinmarketcap.com/, it is BTC
   }
   
   count2++;
@@ -132,12 +152,15 @@ boolean restoreConfig() {
   wifi_ssid = preferences.getString("WIFI_SSID");
   wifi_password = preferences.getString("WIFI_PASSWD");
   cmc_api_key = preferences.getString("CMC_API_KEY");
-  currency = preferences.getString("Currency");  
+  curren_cy = preferences.getString("CURRENCY");  
   M5.Lcd.pushImage(280, 2, infoWidth, infoHeight, info);
+
+  M5.Lcd.pushImage(40, 100, wifilogoWidth, wifilogoHeight, wifilogo);
+
   Serial.print("WIFI-SSID: ");
   M5.Lcd.drawString("WIFI-SSID: ", 0, 0, 2);
   Serial.println(wifi_ssid);
-  M5.Lcd.drawString(wifi_ssid, 80, 0, 2);
+  M5.Lcd.drawString(wifi_ssid, 100, 0, 2);
   Serial.print("WIFI-PASSWD: ");
   M5.Lcd.drawString("WIFI-PASSWD: ", 0, 20, 2);
   Serial.println(wifi_password);
@@ -146,10 +169,10 @@ boolean restoreConfig() {
   M5.Lcd.drawString("CMC_API_KEY: ", 0, 40, 2);
   Serial.println(cmc_api_key);
   M5.Lcd.drawString(cmc_api_key, 100, 40, 2);
-  Serial.print("Currency: ");
-  M5.Lcd.drawString("Currency: ", 0, 60, 2);
-  Serial.println(currency);
-  M5.Lcd.drawString(currency, 100, 60, 2);
+  Serial.print("CURRENCY: ");
+  M5.Lcd.drawString("CURRENCY: ", 0, 60, 2);
+  Serial.println(curren_cy);
+  M5.Lcd.drawString(curren_cy, 100, 60, 2);
 
           
   Serial.print("Bat Voltage: ");
@@ -183,6 +206,9 @@ boolean checkConnection() {
   int count = 0;
   M5.Lcd.fillScreen(TFT_BLACK);
   M5.Lcd.pushImage(280, 2, infoWidth, infoHeight, info);
+
+  M5.Lcd.pushImage(40, 100, wifilogoWidth, wifilogoHeight, wifilogo);
+
   Serial.print("Waiting for Wi-Fi connection");
   M5.Lcd.drawString("Waiting for Wi-Fi connection", 0, 0, 2);
   M5.Lcd.println();
@@ -222,7 +248,8 @@ boolean checkConnection() {
       // reset the wifi config
       preferences.remove("WIFI_SSID");
       preferences.remove("WIFI_PASSWD");
-     // preferences.remove("CMC_API_KEY");
+      preferences.remove("CMC_API_KEY");
+      preferences.remove("CURRENCY");
       delay(1000);
       ESP.restart();
 
@@ -232,20 +259,23 @@ boolean checkConnection() {
 void startWebServer() {
   if (settingMode) {
     M5.Lcd.fillScreen(TFT_BLACK);
+
+    M5.Lcd.pushImage(40, 100, wifilogoWidth, wifilogoHeight, wifilogo);
+
+    M5.Lcd.pushImage(270, 190, wsetupWidth, wsetupHeight, wsetup);
+
     M5.Lcd.setTextColor(WHITE);
     Serial.print("Starting Web Server at ");
-    //M5.Lcd.print("Starting Web Server at ");
     M5.Lcd.drawString("Starting Web Server at 192.168.4.1", 0, 0, 2);
     Serial.println(WiFi.softAPIP());
-    //M5.Lcd.drawString(WiFi.softAPIP(), 100, 0, 2);
-    //M5.Lcd.print(WiFi.softAPIP());
     webServer.on("/settings", []() {
       String s = "<h1>Wi-Fi CMC-API and Currency Settings</h1><p>Please enter your password by selecting the SSID<br> and your Coinmarketcap API Key.<br>Currency USD or EUR</p>";
       s += "<form method=\"get\" action=\"setap\"><label>SSID: </label><select name=\"ssid\">";
       s += ssidList;
-      s += "</select><br>Password: <input name=\"pass\" length=64 type=\"password\">";
-      s += "<br>CMC API Key: <input name=\"apikey\" length=64 type=\"text\"><input type=\">";
-      s += "<br>Currency: <input name=\"currency\" length=64 type=\"text\"><input type=\"submit\"></form>";      
+      s += "</select><br><br>Wifi Password: <input name=\"pass\" length=64 type=\"password\">";
+      s += "<br><br>CMC API Key: <input name=\"apikey\" length=64 type=\"text\">";
+      s += "<br><br>Currency: <input name=\"currency\" length=3 type=\"text\">";
+      s += "<br><br><input type=\"submit\"></form>";      
       webServer.send(200, "text/html", makePage("Wi-Fi Settings", s));
     });
     webServer.on("/setap", []() {
@@ -280,7 +310,7 @@ void startWebServer() {
       preferences.putString("WIFI_SSID", ssid);
       preferences.putString("WIFI_PASSWD", pass);
       preferences.putString("CMC_API_KEY", apikey);
-      preferences.putString("Currency", currency);      
+      preferences.putString("CURRENCY", currency);      
 
       Serial.println("Write nvr done!");
       M5.Lcd.println("Write nvr done!");
@@ -293,7 +323,7 @@ void startWebServer() {
     });
     webServer.onNotFound([]() {
       String s = "<h1>AP mode</h1><p><a href=\"/settings\">Wi-Fi Settings</a></p>";
-      webServer.send(200, "text/html", makePage("AP mode", s));
+      webServer.send(200, "text/html", makePage("AP setup mode", s));
     });
   }
   else {
@@ -319,7 +349,7 @@ void startWebServer() {
       preferences.remove("WIFI_SSID");
       preferences.remove("WIFI_PASSWD");
       preferences.remove("CMC_API_KEY");
-      preferences.remove("Currency");
+      preferences.remove("CURRENCY");
       String s = "<h1>Wi-Fi settings was reset.</h1><p>Please reset device.</p>";
       webServer.send(200, "text/html", makePage("Reset Wi-Fi Settings", s));
       delay(3000);
@@ -358,12 +388,9 @@ void setupMode() {
   // dnsServer.start(53, "*", apIP);
   startWebServer();
   Serial.print("Starting Access Point at \"");
-  //M5.Lcd.print("Starting Access Point at \"");
-   M5.Lcd.drawString("Starting Access Point at: Price-Ticker_SETUP", 0, 20, 2);
+  M5.Lcd.drawString("Starting Access Point at: Price-Ticker_SETUP", 0, 20, 2);
   Serial.print(apSSID);
-  //M5.Lcd.print(apSSID);
   Serial.println("\"");
-  //M5.Lcd.println("\"");
 }
 
 String makePage(String title, String contents) {
@@ -420,10 +447,9 @@ void printTickerDataIOTA(String ticker)
     Serial.println("Getting ticker data for " + ticker);
     M5.Lcd.setTextColor(WHITE);
 
-    //For the new API, you can use the currency ID or abbreviated name, such as
-    //Bitcoin, you can view the letter after Circulating Supply at https://coinmarketcap.com/, it is BTC
+
     CoinMarketCapApi api(client, cmc_api_key);
-    CMCTickerResponse response = api.GetTickerInfo(ticker, currency);
+    CMCTickerResponse response = api.GetTickerInfo(ticker, curren_cy);
     
     if (response.error == "") {
         Serial.print("ID: ");
@@ -517,11 +543,10 @@ void printTickerDataIOTA(String ticker)
 // Battery stat
 
 // reding battery voltage
-    //uint16_t v = analogRead(ADC_PIN);
     float battery_voltage = M5.Axp.GetBatVoltage();
     String voltage = String(battery_voltage);
-    //Serial.println(voltage);
-    //Serial.println("");
+    Serial.println(voltage);
+    Serial.println("");
 
 // battery symbol
     M5.Lcd.fillRect(4, 7, 28, 2, LGRAY);
@@ -606,7 +631,7 @@ void printTickerDataIOTA(String ticker)
 // Price
         M5.Lcd.fillRect(115, 38, 205, 50, BLACK); 
         M5.Lcd.drawString(String(response.price).c_str(), 115, 50, 6);
-        if(currency == "EUR"){
+        if(curren_cy == "EUR"){
 
          if (response.price < 10) {
           M5.Lcd.drawString("EUR", 215, 68, 4);
@@ -618,7 +643,7 @@ void printTickerDataIOTA(String ticker)
         }
 
 
-        if(currency == "USD"){
+        if(curren_cy == "USD"){
 
          if (response.price < 10) {
           M5.Lcd.drawString("USD", 215, 68, 4);
@@ -702,7 +727,6 @@ void printTickerDataIOTA(String ticker)
     else {
         Serial.print("Error getting data: ");
         Serial.println(response.error);
-        //M5.Lcd.fillRect(115, 53, 205, 38, BLACK); //wifi RSSI and alert
         M5.Lcd.fillRect(115, 38, 205, 50, BLACK);
         M5.Lcd.pushImage(283, 53, alertWidth, alertHeight, alert);
         delay(1000);
