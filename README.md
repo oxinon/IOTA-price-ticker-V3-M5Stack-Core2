@@ -22,7 +22,7 @@ IOTA ticker V3 on Youtube: https://www.youtube.com/watch?v=CBe5YHJxLos
 30.12.2021
 - Fix issue with USD/EUR select in Webconfig</p>
 - Add light theme select in Webconfig</p>
-- NEW is a .bin file for esptool, this can be easy flash on the M5Stack Core2<p>
+- NEW is a .bin file for esptool, this can be easy flash on the M5Stack Core2</p>
    <br>
 
 23.06.2021</p>
