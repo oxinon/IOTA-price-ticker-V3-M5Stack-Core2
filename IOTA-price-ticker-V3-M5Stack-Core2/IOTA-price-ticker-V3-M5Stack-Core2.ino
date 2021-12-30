@@ -1,6 +1,3 @@
-// IOTA Price Ticker 3v2 for M5Core2 ESP32 based board
-// info on github: https://github.com/oxinon/IOTA-price-ticker-V3-M5Stack-Core2
-
 #include <M5Core2.h>
 #include <WiFi.h>
 #include <ESPmDNS.h>
@@ -26,25 +23,28 @@
 #include "wifilogo.h"
 #include "wsetup.h"
 
-#define TFT_COLOR1    0x0000 
-#define TFT_COLOR2    0x0000  
+#define LTFT_COLOR1    0xFFFF //TopBar
+#define LTFT_TXT2      0x0000 //TopBarTXT
+#define LTFT_COLOR2    0xFFFF //TopBarLine
+#define LTFT_COLOR3    0xFFFF //Background
+#define LTFT_TXT       0x0000 //Text
+
+#define DTFT_COLOR1    0x0000 //TopBar
+#define DTFT_TXT2      0xC618 //TopBarTXT
+#define DTFT_COLOR2    0x0000 //TopBarLine
+#define DTFT_COLOR3    0x0000 //Background
+#define DTFT_TXT       0xC618 //TextPrice change
+
+#define TFT_TXT       0x7BEF //TextPrice change
+
+#define LGRAY   0xC618
 #define GRAY    0x8410
 #define DGRAY   0x7BEF
 #define DGREEN  0x0606
-#define LGRAY   0xC618
-
 #define DBLUE   0x1414
 #define DRED    0xc0c0
 #define DYELLOW  0xe6e6
-
-
-#define TFT_BAR           0x21CB  
-#define TFT_TEXTBAR       0x21CB  
-#define TFT_LINE          0x21CB  
-#define TFT_TEXTPRICE1    0x21CB  
-#define TFT_TEXTPRICE2    0x21CB 
-#define TFT_TEXTPRICE3    0x21CB 
-#define TFT_TEXTPRICE4    0x21CB 
+ 
 
 #include "CoinMarketCapApi.h"
 
@@ -67,6 +67,7 @@ String wifi_ssid;
 String wifi_password;
 String cmc_api_key;
 String curren_cy;
+String them_e;
 
 float batVoltage = M5.Axp.GetBatVoltage();
 
@@ -153,6 +154,7 @@ boolean restoreConfig() {
   wifi_password = preferences.getString("WIFI_PASSWD");
   cmc_api_key = preferences.getString("CMC_API_KEY");
   curren_cy = preferences.getString("CURRENCY");  
+  them_e = preferences.getString("THEME"); 
   M5.Lcd.pushImage(280, 2, infoWidth, infoHeight, info);
 
   M5.Lcd.pushImage(40, 100, wifilogoWidth, wifilogoHeight, wifilogo);
@@ -173,6 +175,11 @@ boolean restoreConfig() {
   M5.Lcd.drawString("CURRENCY: ", 0, 60, 2);
   Serial.println(curren_cy);
   M5.Lcd.drawString(curren_cy, 100, 60, 2);
+
+  Serial.print("THEME: ");
+  M5.Lcd.drawString("THEME: ", 0, 80, 2);
+  Serial.println(them_e);
+  M5.Lcd.drawString(them_e, 100, 80, 2);
 
           
   Serial.print("Bat Voltage: ");
@@ -204,7 +211,7 @@ boolean restoreConfig() {
 
 boolean checkConnection() {
   int count = 0;
-  M5.Lcd.fillScreen(TFT_BLACK);
+  M5.Lcd.fillScreen(BLACK);
   M5.Lcd.pushImage(280, 2, infoWidth, infoHeight, info);
 
   M5.Lcd.pushImage(40, 100, wifilogoWidth, wifilogoHeight, wifilogo);
@@ -250,6 +257,7 @@ boolean checkConnection() {
       preferences.remove("WIFI_PASSWD");
       preferences.remove("CMC_API_KEY");
       preferences.remove("CURRENCY");
+      preferences.remove("THEME");
       delay(1000);
       ESP.restart();
 
@@ -275,6 +283,7 @@ void startWebServer() {
       s += "</select><br><br>Wifi Password: <input name=\"pass\" length=64 type=\"password\">";
       s += "<br><br>CMC API Key: <input name=\"apikey\" length=64 type=\"text\">";
       s += "<br><br>Currency: <input name=\"currency\" length=3 type=\"text\">";
+      s += "<br><br>Theme: <input name=\"theme\" length=3 type=\"text\">";
       s += "<br><br><input type=\"submit\"></form>";      
       webServer.send(200, "text/html", makePage("Wi-Fi Settings", s));
     });
@@ -300,6 +309,11 @@ void startWebServer() {
       M5.Lcd.print("Currency: ");
       Serial.println(currency);
       M5.Lcd.println(currency);
+      String theme = urlDecode(webServer.arg("theme"));
+      Serial.print("Theme: ");
+      M5.Lcd.print("Theme: ");
+      Serial.println(theme);
+      M5.Lcd.println(theme);
       Serial.println("Writing API to EEPROM...");
       M5.Lcd.println("Writing API to EEPROM...");
 
@@ -310,7 +324,8 @@ void startWebServer() {
       preferences.putString("WIFI_SSID", ssid);
       preferences.putString("WIFI_PASSWD", pass);
       preferences.putString("CMC_API_KEY", apikey);
-      preferences.putString("CURRENCY", currency);      
+      preferences.putString("CURRENCY", currency);
+      preferences.putString("THEME", theme);      
 
       Serial.println("Write nvr done!");
       M5.Lcd.println("Write nvr done!");
@@ -328,8 +343,11 @@ void startWebServer() {
   }
   else {
     
-    
-    M5.Lcd.fillScreen(BLACK);
+    if (them_e == "LIGHT"){
+    M5.Lcd.fillScreen(LTFT_COLOR3);
+     }
+    else {M5.Lcd.fillScreen(DTFT_COLOR3);
+     }
     Serial.print("Starting Web Server at ");
     //M5.Lcd.print("Starting Web Server at ");
     //M5.Lcd.drawString("Loading Ticker data...", 0, 0, 2);
@@ -350,6 +368,7 @@ void startWebServer() {
       preferences.remove("WIFI_PASSWD");
       preferences.remove("CMC_API_KEY");
       preferences.remove("CURRENCY");
+      preferences.remove("THEME");
       String s = "<h1>Wi-Fi settings was reset.</h1><p>Please reset device.</p>";
       webServer.send(200, "text/html", makePage("Reset Wi-Fi Settings", s));
       delay(3000);
@@ -357,10 +376,16 @@ void startWebServer() {
     });
     
 // Header 
-    M5.Lcd.fillRect(0, 0, 320, 27, TFT_COLOR1);
-    M5.Lcd.drawLine(0, 27, 320, 27, TFT_COLOR2);
-    printTickerDataIOTA("MIOTA");
+  if (them_e == "LIGHT"){
+    M5.Lcd.fillRect(0, 0, 320, 27, LTFT_COLOR1);
+    M5.Lcd.drawLine(0, 27, 320, 27, LTFT_COLOR2);
+    } else { M5.Lcd.fillRect(0, 0, 320, 27, DTFT_COLOR1);
+             M5.Lcd.drawLine(0, 27, 320, 27, DTFT_COLOR2);
+             }
+
+    
   }
+  printTickerDataIOTA("MIOTA");  
   webServer.begin();
 }
 
@@ -506,7 +531,10 @@ void printTickerDataIOTA(String ticker)
 // Wifi signal bars
         Serial.print("WiFi Signal strength: ");
         Serial.print(WiFi.RSSI());
-        M5.Lcd.fillRect(280, 0, 40, 26, TFT_COLOR1); //wifi RSSI
+
+        if (them_e == "LIGHT"){
+        M5.Lcd.fillRect(280, 0, 40, 26, LTFT_COLOR1); //wifi RSSI
+        } else M5.Lcd.fillRect(280, 0, 40, 26, DTFT_COLOR1);
 
         float RSSI = 0.0;
         int bars;
@@ -534,10 +562,16 @@ void printTickerDataIOTA(String ticker)
 
 // print signal bars
         for (int b = 0; b <= bars; b++) {
-            M5.Lcd.fillRect(281 + (b * 6), 23 - (b * 4), 5, b * 4, LGRAY);
+          if (them_e == "LIGHT"){
+            M5.Lcd.fillRect(281 + (b * 6), 23 - (b * 4), 5, b * 4, LTFT_TXT2);
+            } else M5.Lcd.fillRect(281 + (b * 6), 23 - (b * 4), 5, b * 4, DTFT_TXT2);
         }
         
-        M5.Lcd.pushImage(10, 40, iota2Width, iota2Height, iota2);
+        if (them_e == "LIGHT"){
+        M5.Lcd.pushImage(10, 40, iota3Width, iota3Height, iota3);
+
+        } else {M5.Lcd.pushImage(10, 40, iota2Width, iota2Height, iota2);
+        }        
 
 
 // Battery stat
@@ -549,11 +583,20 @@ void printTickerDataIOTA(String ticker)
     Serial.println("");
 
 // battery symbol
-    M5.Lcd.fillRect(4, 7, 28, 2, LGRAY);
-    M5.Lcd.fillRect(4, 19, 28, 2, LGRAY);
-    M5.Lcd.fillRect(4, 7, 2, 12, LGRAY);
-    M5.Lcd.fillRect(32, 7, 2, 14, LGRAY);
-    M5.Lcd.fillRect(34, 11, 3, 6, LGRAY);
+   if (them_e == "LIGHT"){
+    M5.Lcd.fillRect(4, 7, 28, 2, LTFT_TXT2);
+    M5.Lcd.fillRect(4, 19, 28, 2, LTFT_TXT2);
+    M5.Lcd.fillRect(4, 7, 2, 12, LTFT_TXT2);
+    M5.Lcd.fillRect(32, 7, 2, 14, LTFT_TXT2);
+    M5.Lcd.fillRect(34, 11, 3, 6, LTFT_TXT2);
+    }
+     else { 
+       M5.Lcd.fillRect(4, 7, 28, 2, DTFT_TXT2);
+       M5.Lcd.fillRect(4, 19, 28, 2, DTFT_TXT2);
+       M5.Lcd.fillRect(4, 7, 2, 12, DTFT_TXT2);
+       M5.Lcd.fillRect(32, 7, 2, 14, DTFT_TXT2);
+       M5.Lcd.fillRect(34, 11, 3, 6, DTFT_TXT2);
+      }
 
 // battery level symbol
    if(battery_voltage <= 2.99){
@@ -566,42 +609,82 @@ void printTickerDataIOTA(String ticker)
     }
        
    if(battery_voltage >= 3.0){
-      M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+    if (them_e == "LIGHT"){
+      M5.Lcd.fillRect(6, 9, 26, 10, LTFT_COLOR1);
+      }
+      else {
+      M5.Lcd.fillRect(6, 9, 26, 10, DTFT_COLOR1);
+      }
       M5.Lcd.fillRect(6, 9, 4, 10, DRED);
       //M5.Lcd.drawString(voltage, 45, 8, 1);
     }
    if(battery_voltage >= 3.2){
-     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+    if (them_e == "LIGHT"){
+      M5.Lcd.fillRect(6, 9, 26, 10, LTFT_COLOR1);
+      }
+      else {
+      M5.Lcd.fillRect(6, 9, 26, 10, DTFT_COLOR1);
+      }
       M5.Lcd.fillRect(6, 9, 6, 10, DRED);
       //M5.Lcd.drawString(voltage, 45, 8, 1);
     }
    if(battery_voltage >= 3.4){
-     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+    if (them_e == "LIGHT"){
+      M5.Lcd.fillRect(6, 9, 26, 10, LTFT_COLOR1);
+      }
+      else {
+      M5.Lcd.fillRect(6, 9, 26, 10, DTFT_COLOR1);
+      }
       M5.Lcd.fillRect(6, 9, 11, 10, DYELLOW);
       //M5.Lcd.drawString(voltage, 45, 8, 1);
     }
    if(battery_voltage >= 3.6){
-     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+    if (them_e == "LIGHT"){
+      M5.Lcd.fillRect(6, 9, 26, 10, LTFT_COLOR1);
+      }
+      else {
+      M5.Lcd.fillRect(6, 9, 26, 10, DTFT_COLOR1);
+      }
       M5.Lcd.fillRect(6, 9, 16, 10, DYELLOW);
       //M5.Lcd.drawString(voltage, 45, 8, 1);
     }
    if(battery_voltage >= 3.8){
-     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+    if (them_e == "LIGHT"){
+      M5.Lcd.fillRect(6, 9, 26, 10, LTFT_COLOR1);
+      }
+      else {
+      M5.Lcd.fillRect(6, 9, 26, 10, DTFT_COLOR1);
+      }
       M5.Lcd.fillRect(6, 9, 21, 10, DGREEN);
       //M5.Lcd.drawString(voltage, 45, 8, 1);
     }
    if(battery_voltage >= 4.0){
-     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+    if (them_e == "LIGHT"){
+      M5.Lcd.fillRect(6, 9, 26, 10, LTFT_COLOR1);
+      }
+      else {
+      M5.Lcd.fillRect(6, 9, 26, 10, DTFT_COLOR1);
+      }
       M5.Lcd.fillRect(6, 9, 26, 10, DGREEN);
       //M5.Lcd.drawString(voltage, 45, 8, 1);
     }
    if(battery_voltage >= 4.60){
-     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+    if (them_e == "LIGHT"){
+      M5.Lcd.fillRect(6, 9, 26, 10, LTFT_COLOR1);
+      }
+      else {
+      M5.Lcd.fillRect(6, 9, 26, 10, DTFT_COLOR1);
+      }
       M5.Lcd.fillRect(6, 9, 26, 10, DGREEN);
       //M5.Lcd.drawString("CHG", 10, 7, 1);
     }
    if(battery_voltage >= 4.85){
-     M5.Lcd.fillRect(6, 9, 26, 10, TFT_COLOR1);
+    if (them_e == "LIGHT"){
+      M5.Lcd.fillRect(6, 9, 26, 10, LTFT_COLOR1);
+      }
+      else {
+      M5.Lcd.fillRect(6, 9, 26, 10, DTFT_COLOR1);
+      }
       M5.Lcd.fillRect(6, 9, 26, 10, CYAN);
       //M5.Lcd.drawString("USB", 10, 7, 1);
     }
@@ -613,32 +696,49 @@ void printTickerDataIOTA(String ticker)
 // Line
         M5.Lcd.drawLine(10, 133, 310, 133, DGRAY);
         
-
-        M5.Lcd.setTextColor(LGRAY);
+      if (them_e == "LIGHT"){
+        M5.Lcd.setTextColor(LTFT_TXT2);
+        }
+        else {M5.Lcd.setTextColor(DTFT_TXT2);
+        }
         M5.Lcd.drawString("IOTA Price Ticker", 65, 4, 4);
               
-
-        M5.Lcd.setTextColor(YELLOW);
+      if (them_e == "LIGHT"){
+        M5.Lcd.setTextColor(DYELLOW);
+        }
+        else {M5.Lcd.setTextColor(YELLOW);
+        }
         
         if (response.percent_change_1h < 0) {
             M5.Lcd.setTextColor(RED);          
-        }
+            }
         
         if (response.percent_change_1h > 0) {
-            M5.Lcd.setTextColor(GREEN);              
+          if (them_e == "LIGHT"){
+            M5.Lcd.setTextColor(DGREEN);
+            } 
+            else {
+            M5.Lcd.setTextColor(GREEN);  
+            }            
         }
         
 // Price
-        M5.Lcd.fillRect(115, 38, 205, 50, BLACK); 
+       if (them_e == "LIGHT"){
+        M5.Lcd.fillRect(115, 38, 205, 50, LTFT_COLOR3); 
+         }
+         else {
+        M5.Lcd.fillRect(115, 38, 205, 50, DTFT_COLOR3);
+        }
+                
         M5.Lcd.drawString(String(response.price).c_str(), 115, 50, 6);
         if(curren_cy == "EUR"){
 
          if (response.price < 10) {
-          M5.Lcd.drawString("EUR", 215, 68, 4);
+          M5.Lcd.drawString("EUR", 215, 67, 4);
          }
 
          if (response.price > 10) {
-          M5.Lcd.drawString("EUR", 235, 68, 4);
+          M5.Lcd.drawString("EUR", 235, 67, 4);
          }
         }
 
@@ -646,11 +746,11 @@ void printTickerDataIOTA(String ticker)
         if(curren_cy == "USD"){
 
          if (response.price < 10) {
-          M5.Lcd.drawString("USD", 215, 68, 4);
+          M5.Lcd.drawString("USD", 215, 67, 4);
          }
 
          if (response.price > 10) {
-          M5.Lcd.drawString("USD", 235, 68, 4);
+          M5.Lcd.drawString("USD", 235, 67, 4);
          }
         }        
 
@@ -671,52 +771,115 @@ void printTickerDataIOTA(String ticker)
 
         M5.Lcd.setTextColor(DBLUE);
         M5.Lcd.drawString("Rank:", 115, 100, 4);
-        M5.Lcd.fillRect(185, 100, 120, 20, BLACK); 
+        if (them_e == "LIGHT"){
+        M5.Lcd.fillRect(185, 100, 120, 20, LTFT_COLOR3); 
+        }
+         else {M5.Lcd.fillRect(185, 100, 120, 20, DTFT_COLOR3); 
+        }        
         M5.Lcd.drawString(String(response.cmc_rank).c_str(), 190, 100, 4);
 
 
 
 
 // hours change
-        M5.Lcd.fillRect(240, 140, 80, 90, BLACK);
-        
-        M5.Lcd.setTextColor(YELLOW);
-
-        if (response.percent_change_1h < 0) {
-            M5.Lcd.setTextColor(RED);
-        }
-        if (response.percent_change_1h > 0) {
-            M5.Lcd.setTextColor(GREEN);
+      if (them_e == "LIGHT"){
+        M5.Lcd.setTextColor(LTFT_TXT);
+        }        
+         else {M5.Lcd.setTextColor(DTFT_TXT);
         }
         M5.Lcd.drawString("% Price change 1h:", 11, 145, 4);
+        if (them_e == "LIGHT"){
+        M5.Lcd.fillRect(240, 140, 80, 90, LTFT_COLOR3); 
+        }
+         else {M5.Lcd.fillRect(240, 140, 80, 90, DTFT_COLOR3); 
+        }
+
+        if (them_e == "LIGHT"){
+        M5.Lcd.fillRect(240, 140, 80, 90, LTFT_COLOR3); 
+        }
+         else {M5.Lcd.fillRect(240, 140, 80, 90, DTFT_COLOR3); 
+        }
+
+        
+      if (them_e == "LIGHT"){
+        M5.Lcd.setTextColor(DYELLOW);
+        }
+        else {M5.Lcd.setTextColor(YELLOW);
+        }
+        
+        if (response.percent_change_1h < 0) {
+            M5.Lcd.setTextColor(RED);          
+            }
+        
+        if (response.percent_change_1h > 0) {
+          if (them_e == "LIGHT"){
+            M5.Lcd.setTextColor(DGREEN);
+            } 
+            else {
+            M5.Lcd.setTextColor(GREEN);  
+            }            
+        }
+
         M5.Lcd.drawString(String(response.percent_change_1h).c_str(), 245, 145, 4);
         delay(1);
 
 
 // 24 hours change
-        M5.Lcd.setTextColor(YELLOW);
-
-        if (response.percent_change_24h < 0) {
-            M5.Lcd.setTextColor(RED);
+      if (them_e == "LIGHT"){
+        M5.Lcd.setTextColor(LTFT_TXT);
         }
-        if (response.percent_change_24h > 0) {
-            M5.Lcd.setTextColor(GREEN);
+         else {M5.Lcd.setTextColor(DTFT_TXT);
         }
         M5.Lcd.drawString("% Price change 24h:", 11, 175, 4);
+      if (them_e == "LIGHT"){
+        M5.Lcd.setTextColor(DYELLOW);
+        }
+        else {M5.Lcd.setTextColor(YELLOW);
+        }
+        
+        if (response.percent_change_24h < 0) {
+            M5.Lcd.setTextColor(RED);          
+            }
+        
+        if (response.percent_change_24h > 0) {
+          if (them_e == "LIGHT"){
+            M5.Lcd.setTextColor(DGREEN);
+            } 
+            else {
+            M5.Lcd.setTextColor(GREEN);  
+            }            
+        }
+
         M5.Lcd.drawString(String(response.percent_change_24h).c_str(), 245, 175, 4);
         delay(1);
 
 
 // 7d hours change
-        M5.Lcd.setTextColor(YELLOW);
-
-        if (response.percent_change_7d < 0) {
-            M5.Lcd.setTextColor(RED);
+      if (them_e == "LIGHT"){
+        M5.Lcd.setTextColor(LTFT_TXT);
         }
-        if (response.percent_change_7d > 0) {
-            M5.Lcd.setTextColor(GREEN);
+         else {M5.Lcd.setTextColor(DTFT_TXT);
         }
         M5.Lcd.drawString("% Price change 7d:", 11, 205, 4);
+      if (them_e == "LIGHT"){
+        M5.Lcd.setTextColor(DYELLOW);
+        }
+        else {M5.Lcd.setTextColor(YELLOW);
+        }
+        
+        if (response.percent_change_7d < 0) {
+            M5.Lcd.setTextColor(RED);          
+            }
+        
+        if (response.percent_change_7d > 0) {
+          if (them_e == "LIGHT"){
+            M5.Lcd.setTextColor(DGREEN);
+            } 
+            else {
+            M5.Lcd.setTextColor(GREEN);  
+            }            
+        }
+
         M5.Lcd.drawString(String(response.percent_change_7d).c_str(), 245, 205, 4);
       
         count2 = 2;
@@ -727,7 +890,11 @@ void printTickerDataIOTA(String ticker)
     else {
         Serial.print("Error getting data: ");
         Serial.println(response.error);
-        M5.Lcd.fillRect(115, 38, 205, 50, BLACK);
+        if (them_e == "LIGHT"){
+        M5.Lcd.fillRect(115, 38, 205, 50, LTFT_COLOR3);
+        }
+        else {M5.Lcd.fillRect(115, 38, 205, 50, DTFT_COLOR3);
+        }        
         M5.Lcd.pushImage(283, 53, alertWidth, alertHeight, alert);
         delay(1000);
     }
