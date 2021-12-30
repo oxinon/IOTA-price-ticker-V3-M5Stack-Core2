@@ -19,6 +19,7 @@ IOTA ticker V3 on Youtube: https://www.youtube.com/watch?v=CBe5YHJxLos
 * * *
 <br>
 <h2>Changelog</h2>
+
 30.12.2021</p>
 - Fix issue with USD/EUR select in Webconfig</p>
 - Add light theme select in Webconfig</p>
