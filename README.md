@@ -13,11 +13,18 @@ IOTA ticker V3 on Youtube: https://www.youtube.com/watch?v=CBe5YHJxLos
 
 + [Add M5Stack to Arduino IDE](#ESP32)
 + [Libraries for Arduino IDE](#libraries)
++ [Install and flash via esptool](#esptool)
 + [How to use](#info)
 
 * * *
 <br>
 <h2>Changelog</h2>
+30.12.2021
+- Fix issue with USD/EUR select in Webconfig</p>
+- Add light theme select in Webconfig</p>
+- NEW is a .bin file for esptool, this can be easy flash on the M5Stack Core2<p>
+   <br>
+
 23.06.2021</p>
 - Add Baterry Indicator</p>
 - Add USD/EUR select in Webconfig</p>
@@ -56,7 +63,12 @@ After the automatic restart, the price ticker connects to your wifi and shows yo
 
 <p><img src="https://github.com/oxinon/IOTA-price-ticker-V3-M5Stack-Core2/blob/main/picture/Wen-settings.png" alt="Cover" width="600"></p>
 <br>
-
+<br>
+<a name="esptool"></a><h2>Install and flash via esptool</h2>
+<br>
+(in progress)
+<br>
+<br>
 <a name="reset"></a><h2>Reset stored config</h2>
 There are two ways to reset the setting, first if no wifi connection is established, only the wifi setting is reset after 30sec., the CMC API key remains stored.
 second possibility, if the price ticker is connected to the wifi, the setting can be reset via the assigned ip address (in my case is this 192.168.1.227), and the CMC API key is also deleted. Then the price ticker starts again in Wifi AP mode.
