@@ -135,7 +135,7 @@ void loop() {
   if(M5.BtnB.isPressed())  M5.Axp.SetLcdVoltage(2800);
   if(M5.BtnC.isPressed())  M5.Axp.SetLcdVoltage(3200);
 
-  if (count2 >=2600) {
+  if (count2 >=3000) {
     printTickerDataIOTA("MIOTA");
 
     //For the new API, you can use the currency ID or abbreviated name, such as
